@@ -1,10 +1,9 @@
 {
   "version": 2,
   "outputDirectory": "public",
-  "buildCommand": null,
-  "installCommand": null,
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "buildCommand": "",
+  "installCommand": "",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
