@@ -2,13 +2,5 @@
   "version": 2,
   "outputDirectory": "public",
   "buildCommand": null,
-  "installCommand": null,
-  "routes": [
-    { "src": "/_next/static/chunks/pages/(.*)", "dest": "/$1" },
-    { "src": "/_next/static/chunks/(.*)", "dest": "/$1" },
-    { "src": "/_next/static/media/(.*)", "dest": "/$1" },
-    { "src": "/_next/image", "dest": "/heroimg.png" },
-    { "src": "/latest/(.*)", "dest": "/$1" },
-    { "src": "/(.*)", "dest": "/$1" }
-  ]
+  "installCommand": null
 }
