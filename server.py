@@ -20,8 +20,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         parts = filename.rsplit(".", 2)
         if len(parts) == 3:
             clean = parts[0] + "." + parts[2]
-            candidate = os.path.join(SERVE_DIR, clean)
-            if os.path.exists(candidate):
+            if os.path.exists(os.path.join(SERVE_DIR, clean)):
                 return clean
 
         # 3. Numeric prefix: 0.descriptive-text.hash.ext -> 0.ext
@@ -29,8 +28,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         ext = filename.rsplit(".", 1)[-1]
         if first.isdigit():
             simple = first + "." + ext
-            candidate = os.path.join(SERVE_DIR, simple)
-            if os.path.exists(candidate):
+            if os.path.exists(os.path.join(SERVE_DIR, simple)):
                 return simple
 
         return None
@@ -43,11 +41,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if path.startswith("/_next/static/chunks/pages/"):
             filename = path.split("/")[-1]
             self.path = "/" + filename
+
         # Remap /_next/static/chunks/X -> /X
         elif path.startswith("/_next/static/chunks/"):
             filename = path.split("/")[-1]
-            candidate = os.path.join(SERVE_DIR, filename)
-            if os.path.exists(candidate):
+            if os.path.exists(os.path.join(SERVE_DIR, filename)):
                 self.path = "/" + filename
             else:
                 self.send_response(200)
@@ -55,7 +53,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
-        # Remap /_next/static/media/X -> /X (full hashed name)
+
+        # Remap /_next/static/media/X -> resolve to actual file
         elif path.startswith("/_next/static/media/"):
             filename = path[len("/_next/static/media/"):]
             resolved = self.resolve_media(filename)
@@ -64,7 +63,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             else:
                 self.send_error(404)
                 return
-        # Handle /_next/image?url=...&w=...&q=... -> serve the image directly
+
+        # Handle /_next/image?url=... -> serve the image directly
         elif path == "/_next/image":
             qs = parse_qs(parsed.query)
             url = qs.get("url", [""])[0]
@@ -75,10 +75,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             else:
                 self.send_error(404)
                 return
+
         # Remap /latest/X -> /X
         elif path.startswith("/latest/"):
             filename = path.split("/")[-1]
             self.path = "/" + filename
+
+        # SPA fallback: unknown paths (e.g. /about, /services) -> serve index.html
+        else:
+            clean_path = path.rstrip("/")
+            # Only fall back if it doesn't look like a file with an extension
+            has_ext = "." in path.split("/")[-1]
+            file_exists = os.path.exists(os.path.join(SERVE_DIR, clean_path.lstrip("/")))
+            if not has_ext and not file_exists and clean_path not in ("", "/"):
+                self.path = "/index.html"
 
         super().do_GET()
 
